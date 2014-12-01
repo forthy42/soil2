@@ -47,6 +47,20 @@ newgcctoolchain {
 	cppflags = ""
 }
 
+newgcctoolchain {
+	name = "arm-android",
+	description = "ARM Android to cross-compile windows binaries from *nix",
+	prefix = "arm-linux-androideabi-",
+	cppflags = ""
+}
+
+newgcctoolchain {
+	name = "x86-android",
+	description = "x86 Android to cross-compile windows binaries from *nix",
+	prefix = "x86-linux-android-",
+	cppflags = ""
+}
+
 if _OPTIONS.platform then
 	-- overwrite the native platform with the options::platform
 	premake.gcc.platforms['Native'] = premake.gcc.platforms[_OPTIONS.platform]
