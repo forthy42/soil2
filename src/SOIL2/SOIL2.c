@@ -18,7 +18,7 @@
 
 #define SOIL_CHECK_FOR_GL_ERRORS 0
 
-#if defined ( linux ) || defined( __linux__ ) || defined( __FreeBSD__ ) || defined(__OpenBSD__) || defined( __NetBSD__ ) || defined( __DragonFly__ ) || defined( __SVR4 )
+#if ( defined ( linux ) || defined( __linux__ ) || defined( __FreeBSD__ ) || defined(__OpenBSD__) || defined( __NetBSD__ ) || defined( __DragonFly__ ) || defined( __SVR4 ) ) && !defined(__ANDROID__)
 #define SOIL_X11_PLATFORM
 #endif
 
@@ -35,8 +35,12 @@
 	#define SOIL_PLATFORM_ANDROID
 #endif
 
-#if ( defined( SOIL_PLATFORM_IOS ) || defined( SOIL_PLATFORM_ANDROID ) ) && ( !defined( SOIL_GLES1 ) && !defined( SOIL_GLES2 ) )
+#if ( defined( SOIL_PLATFORM_IOS ) ) && ( !defined( SOIL_GLES1 ) && !defined( SOIL_GLES2 ) )
 	#define SOIL_GLES1
+#endif
+
+#if ( defined( SOIL_PLATFORM_ANDROID ) ) && ( !defined( SOIL_GLES1 ) && !defined( SOIL_GLES2 ) )
+	#define SOIL_GLES2
 #endif
 
 #if ( defined( SOIL_GLES2 ) || defined( SOIL_GLES1 ) ) && !defined( SOIL_NO_EGL ) && !defined( SOIL_PLATFORM_IOS )
