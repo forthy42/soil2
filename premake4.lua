@@ -25,8 +25,7 @@ function newgcctoolchain(toolchain)
 			cc = toolchain.prefix .. "gcc",
 			cxx = toolchain.prefix .. "g++",
 			ar = toolchain.prefix .. "ar",
-			cppflags = "-MMD " .. toolchain.cppflags,
-			cflags = "-fPIC "
+			cppflags = "-MMD -fPIC " .. toolchain.cppflags,
 		}
 	}
 end
@@ -39,8 +38,7 @@ newplatform {
 		cc = "clang",
 		cxx = "clang++",
 		ar = "ar",
-		cppflags = "-MMD ",
-		cflags = "-fPIC "
+		cppflags = "-MMD -fPIC ",
 	}
 }
 
@@ -135,6 +133,7 @@ solution "SOIL2"
 		configuration "release"
 			defines { "NDEBUG" }
 			flags { "Optimize" }
+			buildoptions { "-fPIC" }
 			targetname "soil2"
 
 	if build == "test" then
