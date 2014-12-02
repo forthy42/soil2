@@ -25,7 +25,8 @@ function newgcctoolchain(toolchain)
 			cc = toolchain.prefix .. "gcc",
 			cxx = toolchain.prefix .. "g++",
 			ar = toolchain.prefix .. "ar",
-			cppflags = "-MMD " .. toolchain.cppflags
+			cppflags = "-MMD " .. toolchain.cppflags,
+			cflags = "-fPIC "
 		}
 	}
 end
@@ -38,7 +39,8 @@ newplatform {
 		cc = "clang",
 		cxx = "clang++",
 		ar = "ar",
-		cppflags = "-MMD "
+		cppflags = "-MMD ",
+		cflags = "-fPIC "
 	}
 }
 
@@ -52,15 +54,36 @@ newgcctoolchain {
 
 newgcctoolchain {
 	name = "arm-android",
-	description = "ARM Android to cross-compile windows binaries from *nix",
+	description = "to cross-compile ARM Android binaries from *nix",
 	prefix = "arm-linux-androideabi-",
 	cppflags = ""
 }
 
 newgcctoolchain {
 	name = "x86-android",
-	description = "x86 Android to cross-compile windows binaries from *nix",
+	description = "to cross-compile x86 Android binaries from *nix",
 	prefix = "x86-linux-android-",
+	cppflags = ""
+}
+
+newgcctoolchain {
+	name = "x86_64-android",
+	description = "to cross-compile x64 Android binaries from *nix",
+	prefix = "x86_64-linux-android-",
+	cppflags = ""
+}
+
+newgcctoolchain {
+	name = "mips-android",
+	description = "to cross-compile MIPS Android binaries from *nix",
+	prefix = "mipsel-linux-android-",
+	cppflags = ""
+}
+
+newgcctoolchain {
+	name = "mips64-android",
+	description = "to cross-compile MIPS64 Android binaries from *nix",
+	prefix = "mips64el-linux-android-",
 	cppflags = ""
 }
 
