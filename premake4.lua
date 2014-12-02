@@ -60,7 +60,7 @@ newgcctoolchain {
 newgcctoolchain {
 	name = "x86-android",
 	description = "to cross-compile x86 Android binaries from *nix",
-	prefix = "x86-linux-android-",
+	prefix = "i686-linux-android-",
 	cppflags = ""
 }
 
