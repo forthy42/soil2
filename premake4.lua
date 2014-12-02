@@ -20,6 +20,7 @@ function newgcctoolchain(toolchain)
 	newplatform {
 		name = toolchain.name,
 		description = toolchain.description,
+		build = "test",
 		gcc = {
 			cc = toolchain.prefix .. "gcc",
 			cxx = toolchain.prefix .. "g++",
@@ -32,6 +33,7 @@ end
 newplatform {
 	name = "clang",
 	description = "Clang",
+	build = "test",
 	gcc = {
 		cc = "clang",
 		cxx = "clang++",
@@ -44,7 +46,8 @@ newgcctoolchain {
 	name = "mingw32",
 	description = "Mingw32 to cross-compile windows binaries from *nix",
 	prefix = "i686-w64-mingw32-",
-	cppflags = ""
+	cppflags = "",
+	build = "test"
 }
 
 newgcctoolchain {
@@ -111,76 +114,78 @@ solution "SOIL2"
 			flags { "Optimize" }
 			targetname "soil2"
 
-	project "soil2-test"
-		kind "WindowedApp"
-		language "C++"
-		links { "soil2-static-lib" }
-		files { "src/test/*.cpp" }
+	if build == "test" then
+		project "soil2-test"
+			kind "WindowedApp"
+			language "C++"
+			links { "soil2-static-lib" }
+			files { "src/test/*.cpp" }
 
-		configuration "mingw32"
-			links { "mingw32" }
+			configuration "mingw32"
+				links { "mingw32" }
 
-		configuration "windows"
-			links {"opengl32","SDL2main","SDL2"}
+			configuration "windows"
+				links {"opengl32","SDL2main","SDL2"}
 
-		configuration "linux"
-			links {"GL","SDL2"}
+			configuration "linux"
+				links {"GL","SDL2"}
 		
-		configuration "macosx"
-			links {"OpenGL.framework","CoreFoundation.framework","SDL2.framework"}
+			configuration "macosx"
+				links {"OpenGL.framework","CoreFoundation.framework","SDL2.framework"}
 		
-		configuration "haiku"
-			links {"GL","SDL2"}
+			configuration "haiku"
+				links {"GL","SDL2"}
 
-		configuration "freebsd"
-			links {"GL","SDL2"}
+			configuration "freebsd"
+				links {"GL","SDL2"}
 		
-		configuration "debug"
-			defines { "DEBUG" }
-			flags { "Symbols" }
-			if not is_vs() then
-				buildoptions{ "-Wall" }
-			end
-			targetname "soil2-test-debug"
+			configuration "debug"
+				defines { "DEBUG" }
+				flags { "Symbols" }
+				if not is_vs() then
+					buildoptions{ "-Wall" }
+				end
+				targetname "soil2-test-debug"
 
-		configuration "release"
-			defines { "NDEBUG" }
-			flags { "Optimize" }
-			targetname "soil2-test-release"
+			configuration "release"
+				defines { "NDEBUG" }
+				flags { "Optimize" }
+				targetname "soil2-test-release"
 			
-	project "soil2-perf-test"
-		kind "ConsoleApp"
-		language "C++"
-		links { "soil2-static-lib" }
-		files { "src/perf_test/*.cpp" }
-
-		configuration "mingw32"
-			links { "mingw32" }
-
-		configuration "windows"
-			links {"opengl32","SDL2main","SDL2"}
-
-		configuration "linux"
-			links {"GL","SDL2"}
-		
-		configuration "macosx"
-			links {"OpenGL.framework","CoreFoundation.framework","SDL2.framework"}
-		
-		configuration "haiku"
-			links {"GL","SDL2"}
-
-		configuration "freebsd"
-			links {"GL","SDL2"}
-		
-		configuration "debug"
-			defines { "DEBUG" }
-			flags { "Symbols" }
-			if not is_vs() then
-				buildoptions{ "-Wall" }
-			end
-			targetname "soil2-perf-test-debug"
-
-		configuration "release"
-			defines { "NDEBUG" }
-			flags { "Optimize" }
-			targetname "soil2-perf-test-release"
+		project "soil2-perf-test"
+			kind "ConsoleApp"
+			language "C++"
+			links { "soil2-static-lib" }
+			files { "src/perf_test/*.cpp" }
+	
+			configuration "mingw32"
+				links { "mingw32" }
+	
+			configuration "windows"
+				links {"opengl32","SDL2main","SDL2"}
+	
+			configuration "linux"
+				links {"GL","SDL2"}
+			
+			configuration "macosx"
+				links {"OpenGL.framework","CoreFoundation.framework","SDL2.framework"}
+			
+			configuration "haiku"
+				links {"GL","SDL2"}
+	
+			configuration "freebsd"
+				links {"GL","SDL2"}
+			
+			configuration "debug"
+				defines { "DEBUG" }
+				flags { "Symbols" }
+				if not is_vs() then
+					buildoptions{ "-Wall" }
+				end
+				targetname "soil2-perf-test-debug"
+	
+			configuration "release"
+				defines { "NDEBUG" }
+				flags { "Optimize" }
+				targetname "soil2-perf-test-release"
+	end
