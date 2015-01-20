@@ -66,6 +66,13 @@ newgcctoolchain {
 }
 
 newgcctoolchain {
+	name = "arm64-android",
+	description = "to cross-compile ARM64 Android binaries from *nix",
+	prefix = "aarch64-linux-android-",
+	cppflags = ""
+}
+
+newgcctoolchain {
 	name = "x86-android",
 	description = "to cross-compile x86 Android binaries from *nix",
 	prefix = "i686-linux-android-",
