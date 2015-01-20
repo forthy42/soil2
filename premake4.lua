@@ -51,6 +51,14 @@ newgcctoolchain {
 }
 
 newgcctoolchain {
+	name = "gcc32",
+	description = "32 bit verion on 64 bit systems",
+	prefix = "",
+	cppflags = "-m32 ",
+	build = "test"
+}
+
+newgcctoolchain {
 	name = "arm-android",
 	description = "to cross-compile ARM Android binaries from *nix",
 	prefix = "arm-linux-androideabi-",
