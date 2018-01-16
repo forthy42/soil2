@@ -117,6 +117,34 @@ function is_vs()
 	return ( string.starts(_ACTION,"vs") )
 end
 
+function os.is_real( os_name )
+	return os.get() == os_name
+end
+
+function os_findlib( name )
+	if os.is_real("macosx") then
+		local path = "/Library/Frameworks/" .. name .. ".framework"
+		
+		if os.isdir( path ) then
+			return path
+		end
+	end
+
+	return os.findlib( name )
+end
+
+function get_backend_link_name( name )
+	if os.is_real("macosx") then
+		local fname = name .. ".framework"
+		
+		if os_findlib( name ) then -- Search for the framework
+			return fname
+		end
+	end
+	
+	return name
+end
+
 solution "SOIL2"
 	location("./make/" .. os.get() .. "/")
 	targetdir("./bin")
@@ -153,10 +181,14 @@ solution "SOIL2"
 
 	if build == "test" then
 		project "soil2-test"
-			kind "WindowedApp"
+		kind "ConsoleApp"
 			language "C++"
 			links { "soil2-static-lib" }
-			files { "src/test/*.cpp" }
+		files { "src/test/*.cpp", "src/common/*.cpp" }
+		
+		if os.is("windows") and not is_vs() then
+			links { "mingw32" }
+		end
 
 			configuration "mingw32"
 				links { "mingw32" }
@@ -168,7 +200,10 @@ solution "SOIL2"
 				links {"GL","SDL2"}
 		
 			configuration "macosx"
-				links {"OpenGL.framework","CoreFoundation.framework","SDL2.framework"}
+			links { "OpenGL.framework", "CoreFoundation.framework", get_backend_link_name("SDL2") }
+			buildoptions {"-F /Library/Frameworks", "-F ~/Library/Frameworks"}
+			linkoptions {"-F /Library/Frameworks", "-F ~/Library/Frameworks"}
+			includedirs { "/Library/Frameworks/SDL2.framework/Headers" }
 		
 			configuration "haiku"
 				links {"GL","SDL2"}
@@ -193,8 +228,12 @@ solution "SOIL2"
 			kind "ConsoleApp"
 			language "C++"
 			links { "soil2-static-lib" }
-			files { "src/perf_test/*.cpp" }
-	
+		files { "src/perf_test/*.cpp", "src/common/*.cpp" }
+
+		if os.is("windows") and not is_vs() then
+			links { "mingw32" }
+		end
+		
 			configuration "mingw32"
 				links { "mingw32" }
 	
@@ -205,8 +244,11 @@ solution "SOIL2"
 				links {"GL","SDL2"}
 			
 			configuration "macosx"
-				links {"OpenGL.framework","CoreFoundation.framework","SDL2.framework"}
-			
+			links { "OpenGL.framework", "CoreFoundation.framework", get_backend_link_name("SDL2") }
+			buildoptions {"-F /Library/Frameworks", "-F ~/Library/Frameworks"}
+			linkoptions {"-F /Library/Frameworks", "-F ~/Library/Frameworks"}
+			includedirs { "/Library/Frameworks/SDL2.framework/Headers" }
+	   
 			configuration "haiku"
 				links {"GL","SDL2"}
 	

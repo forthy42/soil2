@@ -18,10 +18,6 @@
 
 #define SOIL_CHECK_FOR_GL_ERRORS 0
 
-#if ( defined ( linux ) || defined( __linux__ ) || defined( __FreeBSD__ ) || defined(__OpenBSD__) || defined( __NetBSD__ ) || defined( __DragonFly__ ) || defined( __SVR4 ) ) && !defined(__ANDROID__)
-#define SOIL_X11_PLATFORM
-#endif
-
 #if defined( __APPLE_CC__ ) || defined ( __APPLE__ )
 	#include <TargetConditionals.h>
 
@@ -33,10 +29,12 @@
 	#endif
 #elif defined( __ANDROID__ ) || defined( ANDROID )
 	#define SOIL_PLATFORM_ANDROID
+#elif ( defined ( linux ) || defined( __linux__ ) || defined( __FreeBSD__ ) || defined(__OpenBSD__) || defined( __NetBSD__ ) || defined( __DragonFly__ ) || defined( __SVR4 ) )
+	#define SOIL_X11_PLATFORM
 #endif
 
 #if ( defined( SOIL_PLATFORM_IOS ) ) && ( !defined( SOIL_GLES1 ) && !defined( SOIL_GLES2 ) )
-	#define SOIL_GLES1
+	#define SOIL_GLES2
 #endif
 
 #if ( defined( SOIL_PLATFORM_ANDROID ) ) && ( !defined( SOIL_GLES1 ) && !defined( SOIL_GLES2 ) )
@@ -111,6 +109,7 @@
 #endif
 
 #include "SOIL2.h"
+#define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
@@ -118,6 +117,7 @@
 #include "image_DXT.h"
 #include "pvr_helper.h"
 #include "pkm_helper.h"
+#include "jo_jpeg.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -159,10 +159,16 @@ int query_tex_rectangle_capability( void );
 /*	for using DXT compression	*/
 static int has_DXT_capability = SOIL_CAPABILITY_UNKNOWN;
 int query_DXT_capability( void );
+#define SOIL_GL_SRGB			0x8C40
+#define SOIL_GL_SRGB_ALPHA		0x8C42
 #define SOIL_RGB_S3TC_DXT1		0x83F0
 #define SOIL_RGBA_S3TC_DXT1		0x83F1
 #define SOIL_RGBA_S3TC_DXT3		0x83F2
 #define SOIL_RGBA_S3TC_DXT5		0x83F3
+#define SOIL_GL_COMPRESSED_SRGB_S3TC_DXT1_EXT  0x8C4C
+#define SOIL_GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT 0x8C4F
+static int has_sRGB_capability = SOIL_CAPABILITY_UNKNOWN;
+int query_sRGB_capability( void );
 typedef void (APIENTRY * P_SOIL_GLCOMPRESSEDTEXIMAGE2DPROC) (GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLint border, GLsizei imageSize, const GLvoid * data);
 static P_SOIL_GLCOMPRESSEDTEXIMAGE2DPROC soilGlCompressedTexImage2D = NULL;
 
@@ -1418,6 +1424,7 @@ unsigned int
 	unsigned int tex_id;
 	unsigned int internal_texture_format = 0, original_texture_format = 0;
 	int DXT_mode = SOIL_CAPABILITY_UNKNOWN;
+	int sRGB_texture = query_sRGB_capability() == SOIL_CAPABILITY_PRESENT && ( flags & SOIL_FLAG_SRGB_COLOR_SPACE );;
 	int max_supported_size;
 	int iwidth = *width;
 	int iheight = *height;
@@ -1618,18 +1625,10 @@ unsigned int
 		switch( channels )
 		{
 		case 1:
-			#if defined( SOIL_X11_PLATFORM ) || defined( SOIL_PLATFORM_WIN32 ) || defined( SOIL_PLATFORM_OSX )
-			original_texture_format = isAtLeastGL3() ? GL_RED : GL_LUMINANCE;
-			#else
 			original_texture_format = GL_LUMINANCE;
-			#endif
 			break;
 		case 2:
-			#if defined( SOIL_X11_PLATFORM ) || defined( SOIL_PLATFORM_WIN32 ) || defined( SOIL_PLATFORM_OSX )
-			original_texture_format = isAtLeastGL3() ? GL_RG : GL_LUMINANCE_ALPHA;
-			#else
 			original_texture_format = GL_LUMINANCE_ALPHA;
-			#endif
 			break;
 		case 3:
 			original_texture_format = GL_RGB;
@@ -1649,14 +1648,27 @@ unsigned int
 				if( (channels & 1) == 1 )
 				{
 					/*	1 or 3 channels = DXT1	*/
-					internal_texture_format = SOIL_RGB_S3TC_DXT1;
+					internal_texture_format = sRGB_texture ? SOIL_GL_COMPRESSED_SRGB_S3TC_DXT1_EXT : SOIL_RGB_S3TC_DXT1;
 				} else
 				{
 					/*	2 or 4 channels = DXT5	*/
-					internal_texture_format = SOIL_RGBA_S3TC_DXT5;
+					internal_texture_format = sRGB_texture ? SOIL_GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT : SOIL_RGBA_S3TC_DXT5;
 				}
 			}
 		}
+		else if ( sRGB_texture )
+		{
+			switch( channels )
+			{
+			case 3:
+				internal_texture_format = SOIL_GL_SRGB;
+				break;
+			case 4:
+				internal_texture_format = SOIL_GL_SRGB_ALPHA;
+				break;
+			}
+		}
+
 		/*  bind an OpenGL texture ID	*/
 		glBindTexture( opengl_texture_type, tex_id );
 		check_for_GL_errors( "glBindTexture" );
@@ -1874,6 +1886,7 @@ unsigned char*
 	return result;
 }
 
+
 int
 	SOIL_save_image
 	(
@@ -1881,6 +1894,19 @@ int
 		int image_type,
 		int width, int height, int channels,
 		const unsigned char *const data
+	)
+{
+	return SOIL_save_image_quality( filename, image_type, width, height, channels, data, 80 );
+}
+
+int
+	SOIL_save_image_quality
+	(
+		const char *filename,
+		int image_type,
+		int width, int height, int channels,
+		const unsigned char *const data,
+		int quality
 	)
 {
 	int save_result;
@@ -1913,6 +1939,11 @@ int
 		save_result = stbi_write_png( filename,
 				width, height, channels, (const unsigned char *const)data, 0 );
 	} else
+	if ( image_type == SOIL_SAVE_TYPE_JPG )
+	{
+		save_result = jo_write_jpg( filename, (const void*)data, width, height, channels, quality );
+	}
+	else
 	{
 		save_result = 0;
 	}
@@ -2089,23 +2120,13 @@ unsigned int SOIL_direct_load_DDS_from_memory(
 	}
 	if( (header.sCaps.dwCaps1 & DDSCAPS_MIPMAP) && (header.dwMipMapCount > 1) )
 	{
-		int shift_offset;
 		mipmaps = header.dwMipMapCount - 1;
 		DDS_full_size = DDS_main_size;
-		if( uncompressed )
-		{
-			/*	uncompressed DDS, simple MIPmap size calculation	*/
-			shift_offset = 0;
-		} else
-		{
-			/*	compressed DDS, MIPmap size calculation is block based	*/
-			shift_offset = 2;
-		}
 		for( i = 1; i <= mipmaps; ++ i )
 		{
 			int w, h;
-			w = width >> (shift_offset + i);
-			h = height >> (shift_offset + i);
+			w = width >> i;
+			h = height >> i;
 			if( w < 1 )
 			{
 				w = 1;
@@ -2114,7 +2135,15 @@ unsigned int SOIL_direct_load_DDS_from_memory(
 			{
 				h = 1;
 			}
-			DDS_full_size += w*h*block_size;
+			if ( uncompressed )
+			{
+				/*	uncompressed DDS, simple MIPmap size calculation	*/
+				DDS_full_size += w*h*block_size;
+			} else
+			{
+				/*	compressed DDS, MIPmap size calculation is block based	*/
+				DDS_full_size += ((w+3)/4)*((h+3)/4)*block_size;
+			}
 		}
 	} else
 	{
@@ -2762,6 +2791,10 @@ int query_NPOT_capability( void )
 			/*	it's there!	*/
 			has_NPOT_capability = SOIL_CAPABILITY_PRESENT;
 		}
+
+		#if defined( __emscripten__ ) || defined( EMSCRIPTEN )
+		has_NPOT_capability = SOIL_CAPABILITY_PRESENT;
+		#endif
 	}
 	/*	let the user know if we can do non-power-of-two textures or not	*/
 	return has_NPOT_capability;
@@ -2927,6 +2960,29 @@ int query_BGRA8888_capability( void )
 	return has_BGRA8888_capability;
 }
 
+int query_sRGB_capability( void )
+{
+	if ( has_sRGB_capability == SOIL_CAPABILITY_UNKNOWN )
+	{
+		if (0 == SOIL_GL_ExtensionSupported(
+				"GL_EXT_texture_sRGB" )
+				&&
+			0 == SOIL_GL_ExtensionSupported(
+				"GL_EXT_sRGB" )
+				&&
+			0 == SOIL_GL_ExtensionSupported(
+				"EXT_sRGB" ) )
+		{
+			has_sRGB_capability = SOIL_CAPABILITY_NONE;
+		} else
+		{
+			has_sRGB_capability = SOIL_CAPABILITY_PRESENT;
+		}
+	}
+
+	return has_sRGB_capability;
+}
+
 int query_ETC1_capability( void )
 {
 	/*	check for the capability	*/
@@ -2980,6 +3036,15 @@ int query_gen_mipmap_capability( void )
 			if(ext_addr == NULL)
 			{
 				ext_addr = (P_SOIL_GLGENERATEMIPMAPPROC)SOIL_GL_GetProcAddress("glGenerateMipmapEXT");
+			}
+
+			#elif !defined( SOIL_NO_EGL )
+
+			ext_addr = (P_SOIL_GLGENERATEMIPMAPPROC)SOIL_GL_GetProcAddress("glGenerateMipmapOES");
+
+			if(ext_addr == NULL)
+			{
+				ext_addr = (P_SOIL_GLGENERATEMIPMAPPROC)SOIL_GL_GetProcAddress("glGenerateMipmap");
 			}
 
 			#elif defined( SOIL_GLES2 )
