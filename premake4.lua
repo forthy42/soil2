@@ -151,6 +151,34 @@ solution "SOIL2"
 	configurations { "debug", "release" }
 	objdir("obj/" .. os.get() .. "/")
 	
+	project "soil2-shared-lib"
+		kind "SharedLib"
+
+		if is_vs() then
+			language "C++"
+			buildoptions { "/TP" }
+			defines { "_CRT_SECURE_NO_WARNINGS" }
+		else
+			language "C"
+		end
+		
+		targetdir("lib/" .. os.get() .. "/")
+		files { "src/SOIL2/*.c" }
+
+		configuration "debug"
+			defines { "DEBUG" }
+			flags { "Symbols" }
+			if not is_vs() then
+				buildoptions{ "-Wall" }
+			end
+			targetname "soil2-debug"
+
+		configuration "release"
+			defines { "NDEBUG" }
+			flags { "Optimize" }
+			buildoptions { "-fPIC" }
+			targetname "soil2"
+
 	project "soil2-static-lib"
 		kind "StaticLib"
 
