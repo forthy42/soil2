@@ -1,0 +1,13 @@
+Source: libsoil2
+Section: libraries
+Priority: optional
+Maintainer: Bernd Paysan <bernd@net2o.de>
+Build-Depends: debhelper (>= 4.1.16), build-essential, gcc, autoconf, automake, autotools-dev, libtool, libtool-bin, libgles2-mesa-dev
+
+Package: libsoil2
+Version: 2.0
+Architecture: any
+Multi-Arch: same
+Depends: libgles2
+Description: SOIL2
+ Simple OpenGL Image Library, version 2

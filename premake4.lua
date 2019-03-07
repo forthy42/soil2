@@ -26,6 +26,7 @@ function newgcctoolchain(toolchain)
 			cxx = toolchain.prefix .. "g++",
 			ar = toolchain.prefix .. "ar",
 			cppflags = "-MMD -fPIC " .. toolchain.cppflags,
+			ldflags = toolchain.ldflags,
 		}
 	}
 end
@@ -55,6 +56,7 @@ newgcctoolchain {
 	description = "32 bit verion on 64 bit systems",
 	prefix = "",
 	cppflags = "-m32 ",
+	ldflags = "-m32 ",
 	build = "test"
 }
 

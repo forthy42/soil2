@@ -1,0 +1,18 @@
+#!/usr/bin/make -f
+# -*- makefile -*-
+# Simple debian/rules that uses debhelper.
+# Created by Bernd Paysan, in the public domain
+
+D = $(CURDIR)/debian/libsoil2
+
+%:
+	dh $@
+
+override_dh_auto_test:
+override_dh_shlibdeps:
+override_dh_auto_install:
+	echo "Auto Install"
+	mkdir -p $(D)/usr/lib/$(DEB_HOST_MULTIARCH)
+	mkdir -p $(D)/usr/include
+	cp lib/linux/* $(D)/usr/lib/$(DEB_HOST_MULTIARCH)
+	cp src/SOIL2/SOIL2.h $(D)/usr/include
