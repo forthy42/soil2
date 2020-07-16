@@ -14,5 +14,4 @@ override_dh_auto_install:
 	echo "Auto Install"
 	mkdir -p $(D)/usr/lib/$(DEB_HOST_MULTIARCH)
 	mkdir -p $(D)/usr/include
-	cp lib/linux/* $(D)/usr/lib/$(DEB_HOST_MULTIARCH)
-	cp src/SOIL2/SOIL2.h $(D)/usr/include
+	dh_auto_install -- DESTDIR=$(D)
